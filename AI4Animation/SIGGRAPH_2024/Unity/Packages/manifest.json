@@ -48,45 +48,5 @@
     "com.unity.modules.vr": "1.0.0",
     "com.unity.modules.wind": "1.0.0",
     "com.unity.modules.xr": "1.0.0"
-  },
-  "scopedRegistries": [
-    {
-      "name": "Protokit Registry",
-      "url": "https://npm.thefacebook.com/",
-      "scopes": [
-        "com.protokit",
-        "com.thirdparty",
-        "com.oculus",
-        "com.osig",
-        "com.itk",
-        "com.frlagios",
-        "com.frlaudio",
-        "com.frl",
-        "com.lucid",
-        "com.nimble",
-        "com.stage",
-        "com.orion",
-        "com.spark",
-        "com.verts",
-        "com.saturn",
-        "com.xrtx",
-        "com.spatialai",
-        "com.davenport",
-        "com.workrooms",
-        "com.journey",
-        "com.assistant",
-        "com.mrplatform",
-        "com.perception",
-        "com.integration",
-        "com.strike",
-        "com.ctrl",
-        "com.arshell",
-        "com.guardian",
-        "com.webplatform",
-        "com.etxfn",
-        "com.vrcoreuxdesign",
-        "com.meta"
-      ]
-    }
-  ]
+  }
 }
