@@ -225,7 +225,7 @@ namespace DigitalRuby.MagicMirror
 #if UNITY_2020_1_OR_NEWER
 
             var xrDisplaySubsystems = new List<UnityEngine.XR.XRDisplaySubsystem>();
-            SubsystemManager.GetInstances<UnityEngine.XR.XRDisplaySubsystem>(xrDisplaySubsystems);
+            SubsystemManager.GetSubsystems<UnityEngine.XR.XRDisplaySubsystem>(xrDisplaySubsystems);
             foreach (var xrDisplay in xrDisplaySubsystems)
             {
                 if (xrDisplay.running)

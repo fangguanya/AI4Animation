@@ -47,8 +47,8 @@ namespace SIGGRAPH_2024 {
                 Vector3 targetVelocity = Mobility * (waypoint - RB.position).normalized.ClampMagnitude(0f, distanceToTarget);
 
                 Vector3 tmp = Vector3.zero;
-                RB.velocity = Vector3.SmoothDamp(
-                    RB.velocity, 
+                RB.linearVelocity = Vector3.SmoothDamp(
+                    RB.linearVelocity, 
                     targetVelocity, 
                     ref tmp, 
                     Smoothing

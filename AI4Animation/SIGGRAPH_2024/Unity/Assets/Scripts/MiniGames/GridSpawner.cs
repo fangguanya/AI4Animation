@@ -1,6 +1,5 @@
 using System.Collections;
 using System.Collections.Generic;
-using Unity.XR.CoreUtils;
 using UnityEngine;
 
 namespace SIGGRAPH_2024 {

@@ -1,7 +1,8 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
-using Unity.Sentis;
+
 #if UNITY_EDITOR
 using UnityEditor;
 #endif
@@ -10,8 +11,8 @@ namespace AI4Animation {
     [Serializable]
     public class SentisNetwork {
 
-        public ModelAsset Model = null;
-        public BackendType Device = BackendType.CPU;
+        public Unity.InferenceEngine.ModelAsset Model = null;
+        public Unity.InferenceEngine.BackendType Device = Unity.InferenceEngine.BackendType.CPU;
 
         private Inference Session = null;
         
@@ -67,23 +68,26 @@ namespace AI4Animation {
             private Dictionary<string, Input> Inputs = new Dictionary<string, Input>();
             private Dictionary<string, Output> Outputs = new Dictionary<string, Output>();
 
-            public ModelAsset Asset = null;
-            public Model Model = null;
-            public IWorker Engine = null;
+            public Unity.InferenceEngine.ModelAsset Asset = null;
+            public Unity.InferenceEngine.Model Model = null;
+            // public IWorker Engine = null;
+            public Unity.InferenceEngine.Worker Engine = null;
 
-            public Inference(ModelAsset model, BackendType device) {
+            public Inference(Unity.InferenceEngine.ModelAsset model, Unity.InferenceEngine.BackendType device) {
                 if(model == null) {
                     Debug.Log("No model has been assigned.");
                     return;
                 }
                 Asset = model;
-                Model = ModelLoader.Load(model);
-                Engine = WorkerFactory.CreateWorker(device, Model);
-                foreach(Model.Input input in Model.inputs) {
+                Model = Unity.InferenceEngine.ModelLoader.Load(model);
+                // Engine = WorkerFactory.CreateWorker(device, Model);
+                Engine = new Unity.InferenceEngine.Worker(Model, device);
+                foreach(Unity.InferenceEngine.Model.Input input in Model.inputs) {
                     Inputs.Add(input.name, new Input(input.name, input));
                     Debug.Log("Added Input: " + input.name);
                 }
-                foreach(string name in Model.outputs) {
+                foreach(var output in Model.outputs) {
+                    var name = output.name;
                     Outputs.Add(name, new Output(name));
                     Debug.Log("Added Output: " + name);
                 }
@@ -100,19 +104,23 @@ namespace AI4Animation {
 
                 //Run Inference
                 try {
-                    Dictionary<string, Tensor> tensors = new Dictionary<string, Tensor>();
+                    //Dictionary<string, Unity.InferenceEngine.Tensor> tensors = new Dictionary<string, Unity.InferenceEngine.Tensor>();
+                    List<Unity.InferenceEngine.Tensor> tensors = new();
                     foreach(Input input in Inputs.Values) {
-                        tensors.Add(input.Name, new TensorFloat(input.Shape, input.Values));
+                        //tensors.Add(input.Name, new TensorFloat(input.Shape, input.Values));
+                        tensors.Add(new Unity.InferenceEngine.Tensor<float>(input.Shape, input.Values));
                         if(input.Pivot != input.Values.Length) {
                             Debug.LogWarning("Input " + input.Name + " in model " + Asset.name + " did not receive all features.");
                         }
                     }
-                    Engine.Execute(tensors);
-                    foreach(Tensor tensor in tensors.Values) {
+                    //Engine.Execute(tensors);
+                    Engine.Schedule(tensors.ToArray());
+                    foreach(Unity.InferenceEngine.Tensor tensor in tensors) {
                         tensor.Dispose();
                     }
                     foreach(Output output in Outputs.Values) {
-                        output.Values = (Engine.PeekOutput(output.Name) as TensorFloat).ToReadOnlyArray();
+                        //output.Values = (Engine.PeekOutput(output.Name) as TensorFloat).ToReadOnlyArray();
+                        output.Values = ((Unity.InferenceEngine.Tensor<float>)Engine.PeekOutput(output.Name)).DownloadToArray();
                     }
                 } catch(Exception e) {
                     Debug.Log(e);
@@ -169,25 +177,26 @@ namespace AI4Animation {
 
         public class Input : IDisposable {
             public string Name;
-            public SymbolicTensorShape SymbolicShape;
-            public TensorShape Shape;
+            // public SymbolicTensorShape SymbolicShape;
+            public Unity.InferenceEngine.TensorShape Shape;
             public float[] Values;
 
             public int Pivot;
             public HashSet<string> Exceptions = new HashSet<string>();
 
-            public Input(string name, Model.Input node) {
+            public Input(string name, Unity.InferenceEngine.Model.Input node) {
                 Name = name;
-                SymbolicShape = node.shape;
-                if(SymbolicShape.IsFullyKnown()) {
-                    Shape = SymbolicShape.ToTensorShape();
-                    // Values = new TensorFloat(Shape.ToTensorShape(), new float[Shape.ToTensorShape().ToArray().Product()]);
-                    // Values.MakeReadable();
-                } else {
-                    Shape = new TensorShape(1);
-                    // Values = new TensorFloat(new TensorShape(1), new float[1]);
-                    // Values.MakeReadable();
-                }
+                // SymbolicShape = node.shape;
+                // if(SymbolicShape.IsFullyKnown()) {
+                //     Shape = SymbolicShape.ToTensorShape();
+                //     // Values = new TensorFloat(Shape.ToTensorShape(), new float[Shape.ToTensorShape().ToArray().Product()]);
+                //     // Values.MakeReadable();
+                // } else {
+                //     Shape = new Unity.InferenceEngine.TensorShape(1);
+                //     // Values = new TensorFloat(new TensorShape(1), new float[1]);
+                //     // Values.MakeReadable();
+                // }
+                Shape = new Unity.InferenceEngine.TensorShape(1);
                 Values = new float[Shape.ToArray().Product()];
             }
 
@@ -201,7 +210,7 @@ namespace AI4Animation {
                 //     Values.MakeReadable();
                 // }
                 if(Values.Length != size) {
-                    Shape = new TensorShape(size);
+                    Shape = new Unity.InferenceEngine.TensorShape(size);
                     Values = new float[size];
                 }
             }
@@ -426,8 +435,8 @@ namespace AI4Animation {
                 if(id != null) {
                     EditorGUILayout.LabelField(id);
                 }
-                Model = EditorGUILayout.ObjectField("Model", Model, typeof(ModelAsset), true, GUILayout.Width(EditorGUIUtility.currentViewWidth - 30f)) as ModelAsset;
-                Device = (BackendType)EditorGUILayout.EnumPopup("Device", Device, GUILayout.Width(EditorGUIUtility.currentViewWidth - 30f));
+                Model = EditorGUILayout.ObjectField("Model", Model, typeof(Unity.InferenceEngine.ModelAsset), true, GUILayout.Width(EditorGUIUtility.currentViewWidth - 30f)) as Unity.InferenceEngine.ModelAsset;
+                Device = (Unity.InferenceEngine.BackendType)EditorGUILayout.EnumPopup("Device", Device, GUILayout.Width(EditorGUIUtility.currentViewWidth - 30f));
             }
             return EditorGUI.EndChangeCheck();
         }
